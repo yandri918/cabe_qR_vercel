@@ -445,6 +445,25 @@
                     { date: '2025-09-20', event: 'Pemupukan', desc: 'Aplikasi NPK', icon: '🌿' },
                     { date: '2025-12-01', event: 'Panen', desc: 'Panen 15kg Grade B', icon: '🌾' }
                 ]
+            },
+            'CHI-H002-B002-20260102104439': {
+                productId: 'CHI-H002-B002-20260102104439',
+                harvestDate: '2026-01-02',
+                farmLocation: 'Garut, Jawa Barat',
+                farmerName: 'Petani Demo',
+                grade: 'Grade A (Premium)',
+                weight: '10 kg',
+                batchNumber: 'B002',
+                certifications: ['Organic', 'GAP'],
+                timeline: [
+                    { date: '2025-09-15', event: 'Penanaman', desc: 'Bibit ditanam di Garut, Jawa Barat', icon: '🌱' },
+                    { date: '2025-10-20', event: 'Pemupukan', desc: 'Aplikasi pupuk organik', icon: '🌿' },
+                    { date: '2025-11-05', event: 'Penyemprotan', desc: 'Pestisida nabati', icon: '💧' },
+                    { date: '2025-12-10', event: 'Monitoring HST 85', desc: 'Tinggi: 70cm, Daun: 50 helai', icon: '📏' },
+                    { date: '2026-01-02', event: 'Panen', desc: 'Panen 10kg Grade A', icon: '🌾' },
+                    { date: '2026-01-02', event: 'Quality Check', desc: 'Inspeksi kualitas - PASS (Score: 92/100)', icon: '✅' },
+                    { date: '2026-01-02', event: 'Pengemasan', desc: 'Dikemas dengan standar higienis', icon: '📦' }
+                ]
             }
         };
 
@@ -467,7 +486,18 @@
             const product = productDatabase[productId];
 
             if (!product) {
-                errorMessage.textContent = '❌ Product ID tidak ditemukan. Pastikan ID sudah benar.';
+                errorMessage.innerHTML = `
+                    ❌ Product ID tidak ditemukan di database.<br><br>
+                    <strong>Product ID yang dicari:</strong> ${productId}<br><br>
+                    <strong>💡 Tips:</strong><br>
+                    • Pastikan Product ID sudah benar<br>
+                    • Product ID harus sudah terdaftar di sistem<br>
+                    • Hubungi petani untuk konfirmasi Product ID<br><br>
+                    <strong>Sample Product IDs yang tersedia:</strong><br>
+                    • CHI-H001-B001-20260102<br>
+                    • CHI-H002-B001-20260102<br>
+                    • CHI-H002-B002-20260102104439
+                `;
                 errorMessage.classList.add('show');
                 return;
             }
