@@ -467,7 +467,11 @@
             }
         };
 
-        function verifyProduct() {
+        // API Configuration
+        const API_URL = 'https://your-api-url.railway.app'; // UPDATE THIS AFTER DEPLOYING API
+        const USE_API = false; // Set to true after deploying API
+
+        async function verifyProduct() {
             const productId = document.getElementById('productId').value.trim();
             const resultBox = document.getElementById('resultBox');
             const errorMessage = document.getElementById('errorMessage');
@@ -482,91 +486,127 @@
                 return;
             }
 
-            // Check if product exists in database
-            let product = productDatabase[productId];
+            let product = null;
 
-            // If not found, check if it's a valid CHI- format and create dynamic entry
-            if (!product && productId.startsWith('CHI-')) {
-                // Parse Product ID: CHI-H###-B###-TIMESTAMP
-                const parts = productId.split('-');
+            if (USE_API) {
+                // Call API for real data
+                try {
+                    const response = await fetch(`${API_URL}/api/product/${productId}`);
 
-                if (parts.length >= 4) {
-                    // Create dynamic product entry
-                    product = {
-                        productId: productId,
-                        harvestDate: new Date().toISOString().split('T')[0],
-                        farmLocation: 'Garut, Jawa Barat',
-                        farmerName: 'Petani Demo',
-                        grade: 'Grade A (Premium)',
-                        weight: '10 kg',
-                        batchNumber: parts[2] || 'B001',
-                        certifications: ['Organic', 'GAP'],
-                        timeline: [
-                            {
-                                date: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                                event: 'Penanaman',
-                                desc: 'Bibit ditanam di Garut, Jawa Barat',
-                                icon: '🌱'
-                            },
-                            {
-                                date: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                                event: 'Pemupukan',
-                                desc: 'Aplikasi pupuk organik',
-                                icon: '🌿'
-                            },
-                            {
-                                date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                                event: 'Penyemprotan',
-                                desc: 'Pestisida nabati untuk pengendalian hama',
-                                icon: '💧'
-                            },
-                            {
-                                date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                                event: 'Monitoring Pertumbuhan',
-                                desc: 'Tinggi: 70cm, Daun: 50 helai',
-                                icon: '📏'
-                            },
-                            {
-                                date: new Date().toISOString().split('T')[0],
-                                event: 'Panen',
-                                desc: 'Panen 10kg Grade A',
-                                icon: '🌾'
-                            },
-                            {
-                                date: new Date().toISOString().split('T')[0],
-                                event: 'Quality Check',
-                                desc: 'Inspeksi kualitas - PASS (Score: 92/100)',
-                                icon: '✅'
-                            },
-                            {
-                                date: new Date().toISOString().split('T')[0],
-                                event: 'Pengemasan',
-                                desc: 'Dikemas dengan standar higienis',
-                                icon: '📦'
-                            }
-                        ]
-                    };
-
-                    // Add info banner that this is auto-generated
-                    console.log('Auto-generated product data for:', productId);
+                    if (response.ok) {
+                        product = await response.json();
+                    } else if (response.status === 404) {
+                        errorMessage.innerHTML = `
+                            ❌ Product ID tidak ditemukan di database.<br><br>
+                            <strong>Product ID yang dicari:</strong> ${productId}<br><br>
+                            <strong>💡 Tips:</strong><br>
+                            • Generate QR code di Module 19 terlebih dahulu<br>
+                            • Pastikan Product ID sudah benar<br>
+                            • Hubungi petani untuk konfirmasi Product ID
+                        `;
+                        errorMessage.classList.add('show');
+                        return;
+                    } else {
+                        throw new Error('API error');
+                    }
+                } catch (error) {
+                    console.error('API Error:', error);
+                    errorMessage.innerHTML = `
+                        ❌ Gagal terhubung ke API.<br><br>
+                        <strong>Error:</strong> ${error.message}<br><br>
+                        <strong>💡 Tips:</strong><br>
+                        • Periksa koneksi internet<br>
+                        • API mungkin sedang offline<br>
+                        • Hubungi administrator
+                    `;
+                    errorMessage.classList.add('show');
+                    return;
                 }
-            }
+            } else {
+                // Fallback: Use hardcoded database or dynamic generation
+                product = productDatabase[productId];
 
-            if (!product) {
-                errorMessage.innerHTML = `
-                    ❌ Product ID tidak valid.<br><br>
-                    <strong>Product ID yang dicari:</strong> ${productId}<br><br>
-                    <strong>💡 Format Product ID yang benar:</strong><br>
-                    CHI-H###-B###-TIMESTAMP<br><br>
-                    <strong>Contoh:</strong><br>
-                    • CHI-H001-B001-20260102<br>
-                    • CHI-H002-B002-20260102104653<br><br>
-                    <strong>Tips:</strong><br>
-                    • Product ID harus dimulai dengan "CHI-"<br>
-                    • Pastikan format sesuai dengan yang di-generate Module 19
-                `;
-                errorMessage.classList.add('show');
-                return;
+                // If not found, check if it's a valid CHI- format and create dynamic entry
+                if (!product && productId.startsWith('CHI-')) {
+                    const parts = productId.split('-');
+
+                    if (parts.length >= 4) {
+                        // Create dynamic product entry
+                        product = {
+                            productId: productId,
+                            harvestDate: new Date().toISOString().split('T')[0],
+                            farmLocation: 'Garut, Jawa Barat',
+                            farmerName: 'Petani Demo',
+                            grade: 'Grade A (Premium)',
+                            weight: '10 kg',
+                            batchNumber: parts[2] || 'B001',
+                            certifications: ['Organic', 'GAP'],
+                            timeline: [
+                                {
+                                    date: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                                    event: 'Penanaman',
+                                    desc: 'Bibit ditanam di Garut, Jawa Barat',
+                                    icon: '🌱'
+                                },
+                                {
+                                    date: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                                    event: 'Pemupukan',
+                                    desc: 'Aplikasi pupuk organik',
+                                    icon: '🌿'
+                                },
+                                {
+                                    date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                                    event: 'Penyemprotan',
+                                    desc: 'Pestisida nabati untuk pengendalian hama',
+                                    icon: '💧'
+                                },
+                                {
+                                    date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                                    event: 'Monitoring Pertumbuhan',
+                                    desc: 'Tinggi: 70cm, Daun: 50 helai',
+                                    icon: '📏'
+                                },
+                                {
+                                    date: new Date().toISOString().split('T')[0],
+                                    event: 'Panen',
+                                    desc: 'Panen 10kg Grade A',
+                                    icon: '🌾'
+                                },
+                                {
+                                    date: new Date().toISOString().split('T')[0],
+                                    event: 'Quality Check',
+                                    desc: 'Inspeksi kualitas - PASS (Score: 92/100)',
+                                    icon: '✅'
+                                },
+                                {
+                                    date: new Date().toISOString().split('T')[0],
+                                    event: 'Pengemasan',
+                                    desc: 'Dikemas dengan standar higienis',
+                                    icon: '📦'
+                                }
+                            ]
+                        };
+
+                        console.log('Auto-generated product data for:', productId);
+                    }
+                }
+
+                if (!product) {
+                    errorMessage.innerHTML = `
+                        ❌ Product ID tidak valid.<br><br>
+                        <strong>Product ID yang dicari:</strong> ${productId}<br><br>
+                        <strong>💡 Format Product ID yang benar:</strong><br>
+                        CHI-H###-B###-TIMESTAMP<br><br>
+                        <strong>Contoh:</strong><br>
+                        • CHI-H001-B001-20260102<br>
+                        • CHI-H002-B002-20260102104653<br><br>
+                        <strong>Tips:</strong><br>
+                        • Product ID harus dimulai dengan "CHI-"<br>
+                        • Pastikan format sesuai dengan yang di-generate Module 19
+                    `;
+                    errorMessage.classList.add('show');
+                    return;
+                }
             }
 
             // Display product information
