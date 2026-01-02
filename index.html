@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verifikasi Produk Cabai - Traceability System</title>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -214,6 +215,31 @@
             display: block;
         }
 
+        #qr-reader {
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 15px;
+            display: none;
+        }
+
+        #qr-reader.show {
+            display: block;
+        }
+
+        .scanner-toggle {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .scanner-toggle button {
+            background: #2ecc71;
+        }
+
+        .scanner-toggle button.active {
+            background: #e74c3c;
+        }
+
         @media (max-width: 600px) {
             .header h1 {
                 font-size: 1.8em;
@@ -239,7 +265,14 @@
 
         <div class="search-box">
             <h2>Scan atau Masukkan Product ID</h2>
-            <div class="input-group">
+
+            <div class="scanner-toggle">
+                <button id="scannerToggle" onclick="toggleScanner()">📷 Buka Scanner QR</button>
+            </div>
+
+            <div id="qr-reader"></div>
+
+            <div class="input-group" style="margin-top: 15px;">
                 <input type="text" id="productId" placeholder="Contoh: CHI-H001-B001-20260102">
                 <button onclick="verifyProduct()">🔍 Verifikasi</button>
             </div>
@@ -295,6 +328,87 @@
     </div>
 
     <script>
+        // QR Scanner
+        let html5QrCode = null;
+        let scannerActive = false;
+
+        function toggleScanner() {
+            const qrReader = document.getElementById('qr-reader');
+            const toggleBtn = document.getElementById('scannerToggle');
+
+            if (!scannerActive) {
+                // Start scanner
+                qrReader.classList.add('show');
+                toggleBtn.textContent = '❌ Tutup Scanner';
+                toggleBtn.classList.add('active');
+                startScanner();
+            } else {
+                // Stop scanner
+                stopScanner();
+                qrReader.classList.remove('show');
+                toggleBtn.textContent = '📷 Buka Scanner QR';
+                toggleBtn.classList.remove('active');
+            }
+        }
+
+        function startScanner() {
+            html5QrCode = new Html5Qrcode("qr-reader");
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                },
+                (decodedText, decodedResult) => {
+                    // QR code successfully scanned
+                    console.log(`QR Code detected: ${decodedText}`);
+
+                    // Try to parse JSON
+                    try {
+                        const qrData = JSON.parse(decodedText);
+                        const productId = qrData.product_id;
+
+                        // Set product ID and verify
+                        document.getElementById('productId').value = productId;
+                        stopScanner();
+                        document.getElementById('qr-reader').classList.remove('show');
+                        document.getElementById('scannerToggle').textContent = '📷 Buka Scanner QR';
+                        document.getElementById('scannerToggle').classList.remove('active');
+                        verifyProduct();
+                    } catch (e) {
+                        // If not JSON, use as product ID directly
+                        document.getElementById('productId').value = decodedText;
+                        stopScanner();
+                        document.getElementById('qr-reader').classList.remove('show');
+                        document.getElementById('scannerToggle').textContent = '📷 Buka Scanner QR';
+                        document.getElementById('scannerToggle').classList.remove('active');
+                        verifyProduct();
+                    }
+                },
+                (errorMessage) => {
+                    // Scanner error (ignore, happens frequently)
+                }
+            ).then(() => {
+                scannerActive = true;
+            }).catch((err) => {
+                console.error('Scanner error:', err);
+                alert('Tidak dapat mengakses kamera. Pastikan izin kamera sudah diberikan.');
+                scannerActive = false;
+            });
+        }
+
+        function stopScanner() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    scannerActive = false;
+                    html5QrCode = null;
+                }).catch((err) => {
+                    console.error('Error stopping scanner:', err);
+                });
+            }
+        }
+
         // Sample database (in production, this would be an API call)
         const productDatabase = {
             'CHI-H001-B001-20260102': {
